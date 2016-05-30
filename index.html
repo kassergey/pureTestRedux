@@ -19,8 +19,16 @@
     <div id="dataBlock"></div>
 </div>
 <script>
+    function friend(state, action)
+    {
+        switch(action.type)
+        {
+            case "addFriend": return {name: action.name, surname: action.surname, age: action.age, isTheBest: action.isTheBest };
+            default : return state;
+        }
+    }
     function friends(state, action) {
-        deepFreeze(state);//сделал объект не extensible
+        deepFreeze(state);//сделал объект не extensible, теперь при изменении state будет выдано исключение
         //разкомментируйте нижний код и будет исключение, проверка на возможность мутации состояния
         //state.push(0);
         switch(action.type)
@@ -30,15 +38,15 @@
                 {
                     return state;
                 }
-                return state.concat({name: action.name, surname: action.surname, age: action.age, isTheBest: action.isTheBest });
+                return state.concat(friend(undefined, action));
             })();
             case "deleteFriend": return (function() {
                 return (state.slice(0, action.id).concat(state.slice(+action.id+1)));
             })();
             case "invertTheBestFriend": return (function() {
                 return (state.slice(0, action.id)
-                        .concat({name: state[action.id].name, surname: state[action.id].surname, age: state[action.id].age, isTheBest: !state[action.id].isTheBest })
-                        .concat(state.slice(+action.id+1)));
+                 .concat(Object.assign({}, state[action.id], {isTheBest:!state[action.id].isTheBest}))
+                 .concat(state.slice(+action.id+1)));
             })();
             default : return state;
         }
@@ -89,6 +97,23 @@
             friendsStore.dispatch({type:"invertTheBestFriend", id:numFor});
         }
     });
+
+    function initialize()
+    {
+        friendsStore.dispatch({type:"addFriend", name:"Сергій", surname:"Бакулін",
+            age:19, isTheBest:false});
+        friendsStore.dispatch({type:"addFriend", name:"Сергій", surname:"Бахтеєва",
+            age:19, isTheBest:true});
+        friendsStore.dispatch({type:"addFriend", name:"Сергій", surname:"Бойко",
+            age:19, isTheBest:false});
+        friendsStore.dispatch({type:"addFriend", name:"Сергій", surname:"Воропаєв",
+            age:19, isTheBest:true});
+        friendsStore.dispatch({type:"addFriend", name:"Сергій", surname:"Гусак",
+            age:19, isTheBest:false});
+        friendsStore.dispatch({type:"addFriend", name:"Іван", surname:"Гусак",
+            age:19, isTheBest:false});
+    }
+    initialize();
 </script>
 </body>
 </html>
