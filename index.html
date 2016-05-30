@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Friends list</title>
+    <script src="https://wzrd.in/standalone/deep-freeze@latest"></script>
+    <script src="https://npmcdn.com/redux@latest/dist/redux.min.js"></script>
+</head>
+<body>
+<div>
+    <form>
+        <label for="nameEl">Name:<input type="text" id="nameEl"/></label><br/>
+        <label for="surnameEl">Surname:<input type="text" id="surnameEl"/></label><br/>
+        <label for="ageEl">Age:<input type="text" id="ageEl"/></label><br/>
+        <label for="isTheBestEl">Is the best friend:<input type="checkbox" id="isTheBestEl"/></label><br/>
+        <button id="addButton" type="button">Add</button>
+        <button id="removeButton" type="button">Remove</button>
+        <button id="theBestFriendButton" type="button">Make or unmake the best friend</button>
+    </form>
+    <div id="dataBlock"></div>
+</div>
+<script>
+    function friends(state, action) {
+        deepFreeze(state);//сделал объект не extensible
+        //разкомментируйте нижний код и будет исключение, проверка на возможность мутации состояния
+        //state.push(0);
+        switch(action.type)
+        {
+            case "addFriend": return (function() {
+                if(action.name === "")
+                {
+                    return state;
+                }
+                return state.concat({name: action.name, surname: action.surname, age: action.age, isTheBest: action.isTheBest });
+            })();
+            case "deleteFriend": return (function() {
+                return (state.slice(0, action.id).concat(state.slice(+action.id+1)));
+            })();
+            case "invertTheBestFriend": return (function() {
+                return (state.slice(0, action.id)
+                        .concat({name: state[action.id].name, surname: state[action.id].surname, age: state[action.id].age, isTheBest: !state[action.id].isTheBest })
+                        .concat(state.slice(+action.id+1)));
+            })();
+            default : return state;
+        }
+    }
+    var friendsStore = Redux.createStore(friends, []);
+
+    //buttons
+    var addButton = document.getElementById('addButton');
+    var removeButton = document.getElementById('removeButton');
+    var theBestFriendButton = document.getElementById('theBestFriendButton');
+
+    //elements
+    var nameEl = document.getElementById('nameEl');
+    var surnameEl = document.getElementById('surnameEl');
+    var ageEl = document.getElementById('surnameEl');
+    var isTheBestEl = document.getElementById('isTheBestEl');
+
+    function render() {
+        var dataBlock = document.getElementById('dataBlock');
+        //TODO:сделать поумнее
+        dataBlock.innerHTML = "";
+        var state = friendsStore.getState();
+        var arrayLength = state.length;
+        for (var i = 0; i < arrayLength; i++) {
+            dataBlock.innerHTML +="<p>" + i + ":" + state[i].name + " - " + state[i].surname + " - " + state[i].age + " - "
+                    + state[i].isTheBest + "</p>";
+        }
+    }
+    render();
+    friendsStore.subscribe(render);
+
+    //buttons events
+    addButton.addEventListener("click", function(){
+        friendsStore.dispatch({type:"addFriend", name:nameEl.value, surname:surnameEl.value,
+            age:ageEl.value, isTheBest:isTheBestEl.checked});
+    });
+    removeButton.addEventListener("click", function(){
+        var numForDelete = prompt("Введите индекс для удаления: ");
+        if(!isNaN(numForDelete))
+        {
+            friendsStore.dispatch({type:"deleteFriend", id:numForDelete});
+        }
+    });
+    theBestFriendButton.addEventListener("click", function(){
+        var numFor = prompt("Введите индекс изменения статуса лучшего друга: ");
+        if(!isNaN(numFor))
+        {
+            friendsStore.dispatch({type:"invertTheBestFriend", id:numFor});
+        }
+    });
+</script>
+</body>
+</html>
